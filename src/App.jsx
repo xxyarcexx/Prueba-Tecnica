@@ -1,12 +1,12 @@
 import './App.css'
+import AppRoutes from './routes/router'
 
 function App() {
-
   return (
     <div>
-      <p>Gestor de Talento Humano</p>
+      <AppRoutes />
     </div>
-  )
+  );
 }
 
 export default App
