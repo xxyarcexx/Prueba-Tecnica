@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Search, Filter, ArrowLeft, Mail, Phone, Eye, ArrowUpDown } from "lucide-react"
 
 
-const empleados = [
+export const empleados = [
   {
     id: 1,
     nombre: "Ana García",
