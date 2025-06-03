@@ -1,4 +1,4 @@
-import { useState } from "react"
+import React, { useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { Button } from "../../components/ui/button.tsx"
 import { Input } from "../../components/ui/input"
@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { Search, Filter, ArrowLeft, Mail, Phone, Eye, ArrowUpDown } from "lucide-react"
+import { Search, Filter, ArrowLeft, Mail, Phone, Eye, ArrowUpDown, Users, BarChart3, Settings, Building2 } from "lucide-react"
+import Sidebar from "@/components/Sidebar"; // Import the new Sidebar component
 
 
 export const empleados = [
@@ -109,284 +110,144 @@ export const empleados = [
   },
 ]
 
-function Employees() {
-    const [busqueda, setBusqueda] = useState("")
-    const [filtroDepto, setFiltroDepto] = useState("todos")
-    const [filtroEstado, setFiltroEstado] = useState("todos")
-    const [ordenPor, setOrdenPor] = useState("nombre")
-    const [ordenDireccion, setOrdenDireccion] = useState("asc") // Removed TypeScript annotation
+const Employees = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [sortBy, setSortBy] = useState('id');
+  const [sortOrder, setSortOrder] = useState('asc');
 
-    const departamentos = [...new Set(empleados.map((emp) => emp.departamento))]
-    const estados = [...new Set(empleados.map((emp) => emp.estado))]
+  const filteredEmployees = useMemo(() => {
+    let filtered = empleados;
 
-    const empleadosFiltrados = empleados
-        .filter((empleado) => {
-        const coincideBusqueda =
-            empleado.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-            empleado.puesto.toLowerCase().includes(busqueda.toLowerCase()) ||
-            empleado.email.toLowerCase().includes(busqueda.toLowerCase()) ||
-            empleado.departamento.toLowerCase().includes(busqueda.toLowerCase())
-
-        const coincideDepto = filtroDepto === "todos" || empleado.departamento === filtroDepto
-        const coincideEstado = filtroEstado === "todos" || empleado.estado === filtroEstado
-
-        return coincideBusqueda && coincideDepto && coincideEstado
-        }).sort((a, b) => {
-            let aValue = a[ordenPor];
-            let bValue = b[ordenPor];
-
-            // Si es fecha, conviértela en objeto Date
-            if (ordenPor === "fechaIngreso") {
-                aValue = new Date(aValue);
-                bValue = new Date(bValue);
-            }
-
-            if (typeof aValue === "string") aValue = aValue.toLowerCase();
-            if (typeof bValue === "string") bValue = bValue.toLowerCase();
-
-            if (aValue === undefined || bValue === undefined) return 0;
-
-            if (ordenDireccion === "asc") {
-                return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-            } else {
-                return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-            }
-        })
-
-
-    const handleSort = (campo) => {
-        if (ordenPor === campo) {
-        setOrdenDireccion(ordenDireccion === "asc" ? "desc" : "asc")
-        } else {
-        setOrdenPor(campo)
-        setOrdenDireccion("asc")
-        }
+    if (filterRole !== 'all') {
+      filtered = filtered.filter(empleado => empleado.puesto.includes(filterRole)); // Changed from empleado.rol to empleado.puesto
     }
 
-    const formatearFecha = (fecha) => {
-        return new Date(fecha).toLocaleDateString("es-ES", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        })
+    if (searchTerm) {
+      filtered = filtered.filter(
+        empleado =>
+          empleado.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          empleado.puesto.toLowerCase().includes(searchTerm.toLowerCase()) || // Added puesto to search
+          empleado.departamento.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-                <div className="flex items-center space-x-4">
-                <Link href="/">
-                    <Button variant="ghost" size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Volver al Inicio
-                    </Button>
-                </Link>
-                <h1 className="text-xl font-bold text-gray-900">Directorio de Empleados</h1>
-                </div>
-                <Badge variant="secondary">{empleadosFiltrados.length} empleados</Badge>
-            </div>
-            </div>
-        </header>
+    filtered.sort((a, b) => {
+      if (sortBy === 'id') {
+        return sortOrder === 'asc' ? a.id - b.id : b.id - a.id;
+      } else if (sortBy === 'nombre') {
+        return sortOrder === 'asc'
+          ? a.nombre.localeCompare(b.nombre)
+          : b.nombre.localeCompare(a.nombre);
+      } else if (sortBy === 'puesto') { // Added sort by puesto
+        return sortOrder === 'asc'
+          ? a.puesto.localeCompare(b.puesto)
+          : b.puesto.localeCompare(a.puesto);
+      }
+      return 0;
+    });
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Filtros y Búsqueda */}
-            <Card className="mb-6">
-            <CardHeader>
-                <CardTitle className="flex items-center">
-                <Search className="h-5 w-5 mr-2" />
-                Búsqueda y Filtros
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                    placeholder="Buscar por nombre, puesto, email o departamento..."
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    className="pl-10"
-                    />
-                </div>
-                <div className="flex gap-2">
-                    <Select value={filtroDepto} onValueChange={setFiltroDepto}>
-                    <SelectTrigger className="w-[180px]">
-                        <Filter className="h-4 w-4 mr-2" />
-                        <SelectValue placeholder="Departamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="todos">Todos los departamentos</SelectItem>
-                        {departamentos.map((depto) => (
-                        <SelectItem key={depto} value={depto}>
-                            {depto}
-                        </SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
+    return filtered;
+  }, [searchTerm, filterRole, sortBy, sortOrder]);
 
-                    <Select value={filtroEstado} onValueChange={setFiltroEstado}>
-                    <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="todos">Todos los estados</SelectItem>
-                        {estados.map((estado) => (
-                        <SelectItem key={estado} value={estado}>
-                            {estado}
-                        </SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                </div>
-                </div>
-            </CardContent>
-            </Card>
+  return (
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
+      <Sidebar />
+      <div className="flex-1 p-4 pt-16 lg:pl-64 lg:pt-4">
+        <h1 className="text-3xl font-bold mb-6">Gestión de Empleados</h1>
 
-            {/* Tabla de Empleados */}
-            <Card>
-            <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[250px]">
-                        <Button variant="ghost" onClick={() => handleSort("nombre")} className="h-auto p-0 font-semibold">
-                            Empleado
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                        </TableHead>
-                        <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort("puesto")} className="h-auto p-0 font-semibold">
-                            Puesto
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                        </TableHead>
-                        <TableHead>
-                        <Button
-                            variant="ghost"
-                            onClick={() => handleSort("departamento")}
-                            className="h-auto p-0 font-semibold"
-                        >
-                            Departamento
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                        </TableHead>
-                        <TableHead>Contacto</TableHead>
-                        <TableHead>
-                        <Button
-                            variant="ghost"
-                            onClick={() => handleSort("ubicacion")}
-                            className="h-auto p-0 font-semibold"
-                        >
-                            Ubicación
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                        </TableHead>
-                        <TableHead>
-                        <Button
-                            variant="ghost"
-                            onClick={() => handleSort("fechaIngreso")}
-                            className="h-auto p-0 font-semibold"
-                        >
-                            Fecha Ingreso
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                        </TableHead>
-                        <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort("estado")} className="h-auto p-0 font-semibold">
-                            Estado
-                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                        </TableHead>
-                        <TableHead className="text-center">Acciones</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {empleadosFiltrados.map((empleado) => (
-                        <TableRow key={empleado.id} className="hover:bg-gray-50">
-                        <TableCell>
-                            <div className="flex items-center space-x-3">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage src={empleado.avatar || "/placeholder.svg"} alt={empleado.nombre} />
-                                <AvatarFallback>
-                                {empleado.nombre
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <div className="font-medium text-gray-900">{empleado.nombre}</div>
-                            </div>
-                            </div>
-                        </TableCell>
-                        <TableCell>
-                            <div className="text-sm text-gray-900">{empleado.puesto}</div>
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant="outline">{empleado.departamento}</Badge>
-                        </TableCell>
-                        <TableCell>
-                            <div className="space-y-1">
-                            <div className="flex items-center text-sm text-gray-600">
-                                <Mail className="h-3 w-3 mr-1" />
-                                <span className="truncate max-w-[150px]">{empleado.email}</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600">
-                                <Phone className="h-3 w-3 mr-1" />
-                                <span>{empleado.telefono}</span>
-                            </div>
-                            </div>
-                        </TableCell>
-                        <TableCell>
-                            <span className="text-sm text-gray-900">{empleado.ubicacion}</span>
-                        </TableCell>
-                        <TableCell>
-                            <span className="text-sm text-gray-600">{formatearFecha(empleado.fechaIngreso)}</span>
-                        </TableCell>
-                        <TableCell>
-                            <Badge
-                            variant={
-                                empleado.estado === "Activo"
-                                ? "default"
-                                : empleado.estado === "Remoto"
-                                    ? "secondary"
-                                    : "outline"
-                            }
-                            >
-                            {empleado.estado}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            <Link to={`/empleados/${empleado.id}`}>
-                            <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                            </Button>
-                            </Link>
-                        </TableCell>
-                        </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
-                </div>
-            </CardContent>
-            </Card>
-
-            {empleadosFiltrados.length === 0 && (
-            <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">
-                No se encontraron empleados que coincidan con los filtros aplicados.
-                </p>
-            </div>
-            )}
-        </main>
+        <div className="mb-6 flex flex-col md:flex-row items-center gap-4">
+          <Input
+            type="text"
+            placeholder="Buscar por nombre, puesto o departamento..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full md:w-auto"
+          />
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Filtrar por puesto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los puestos</SelectItem>
+              <SelectItem value="Gerente">Gerente</SelectItem>
+              <SelectItem value="Desarrollador">Desarrollador</SelectItem>
+              <SelectItem value="Diseñador">Diseñador</SelectItem>
+              <SelectItem value="Analista">Analista</SelectItem>
+              <SelectItem value="Especialista">Especialista</SelectItem>
+              <SelectItem value="Coordinador">Coordinador</SelectItem>
+              <SelectItem value="Contador">Contador</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="id">ID</SelectItem>
+              <SelectItem value="nombre">Nombre</SelectItem>
+              <SelectItem value="puesto">Puesto</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="w-full md:w-auto"
+          >
+            {sortOrder === 'asc' ? 'Ascendente' : 'Descendente'}
+          </Button>
         </div>
-    )    
-}
 
-
+        <div className="overflow-x-auto">
+          <Table className="min-w-full bg-white">
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Puesto</TableHead>
+                <TableHead>Departamento</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Teléfono</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredEmployees.map(empleado => (
+                <TableRow key={empleado.id}>
+                  <TableCell>{empleado.id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="hidden h-9 w-9 sm:flex">
+                        <AvatarImage alt="Avatar" src={empleado.avatar} />
+                        <AvatarFallback>{empleado.nombre.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <Link to={`/perfil/${empleado.id}`}>{empleado.nombre}</Link>
+                    </div>
+                  </TableCell>
+                  <TableCell>{empleado.puesto}</TableCell>
+                  <TableCell>{empleado.departamento}</TableCell>
+                  <TableCell>{empleado.email}</TableCell>
+                  <TableCell>{empleado.telefono}</TableCell>
+                  <TableCell>
+                    <Badge variant={empleado.estado === 'Activo' ? 'default' : 'outline'}>
+                      {empleado.estado}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Link to={`/perfil/${empleado.id}`}>
+                      <Button size="icon" variant="outline">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Employees;
