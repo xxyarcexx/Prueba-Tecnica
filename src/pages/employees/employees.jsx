@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Button } from "../../components/ui/button.tsx"
 import { Input } from "../../components/ui/input"
@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Search, Filter, ArrowLeft, Mail, Phone, Eye, ArrowUpDown, Users, BarChart3, Settings, Building2 } from "lucide-react"
-import Sidebar from "@/components/Sidebar"; // Import the new Sidebar component
+// import Sidebar from "@/components/Sidebar"; // Eliminada la importación del Sidebar
 
 
 export const empleados = [
@@ -110,130 +110,191 @@ export const empleados = [
   },
 ]
 
+// Elimina estas líneas (114-115):
+// Mantén todas las importaciones existentes
+// Añade esta importación si no la tienes
+// import { useState, useMemo, useEffect } from "react";
+
+// Mantén la constante empleados y el resto del código hasta el return
+
 const Employees = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
-  const [sortBy, setSortBy] = useState('id');
-  const [sortOrder, setSortOrder] = useState('asc');
+  // Estado para la vista móvil
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  // Estados para la búsqueda, filtrado y ordenamiento
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [sortBy, setSortBy] = useState("id");
+  const [sortOrder, setSortOrder] = useState("asc");
+  
+  // Efecto para detectar cambios en el tamaño de la ventana
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Filtrado y ordenamiento de empleados
   const filteredEmployees = useMemo(() => {
-    let filtered = empleados;
-
-    if (filterRole !== 'all') {
-      filtered = filtered.filter(empleado => empleado.puesto.includes(filterRole)); // Changed from empleado.rol to empleado.puesto
+    // Filtrar por término de búsqueda
+    let result = empleados.filter(emp => 
+      emp.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.puesto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.departamento.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Filtrar por puesto
+    if (filterRole !== "all") {
+      result = result.filter(emp => emp.puesto.includes(filterRole));
     }
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        empleado =>
-          empleado.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          empleado.puesto.toLowerCase().includes(searchTerm.toLowerCase()) || // Added puesto to search
-          empleado.departamento.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    filtered.sort((a, b) => {
-      if (sortBy === 'id') {
-        return sortOrder === 'asc' ? a.id - b.id : b.id - a.id;
-      } else if (sortBy === 'nombre') {
-        return sortOrder === 'asc'
-          ? a.nombre.localeCompare(b.nombre)
-          : b.nombre.localeCompare(a.nombre);
-      } else if (sortBy === 'puesto') { // Added sort by puesto
-        return sortOrder === 'asc'
-          ? a.puesto.localeCompare(b.puesto)
-          : b.puesto.localeCompare(a.puesto);
+    
+    // Ordenar
+    return result.sort((a, b) => {
+      const valueA = a[sortBy];
+      const valueB = b[sortBy];
+      
+      if (typeof valueA === "string") {
+        return sortOrder === "asc" 
+          ? valueA.localeCompare(valueB) 
+          : valueB.localeCompare(valueA);
       }
-      return 0;
+      
+      return sortOrder === "asc" ? valueA - valueB : valueB - valueA;
     });
-
-    return filtered;
   }, [searchTerm, filterRole, sortBy, sortOrder]);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 p-4 pt-16 lg:pl-64 lg:pt-4">
-        <h1 className="text-3xl font-bold mb-6">Gestión de Empleados</h1>
+    <div className="w-full animate-fadeIn">
+      <h1 className="text-3xl font-bold mb-6 text-center lg:text-left">Gestión de Empleados</h1>
 
-        <div className="mb-6 flex flex-col md:flex-row items-center gap-4">
-          <Input
-            type="text"
-            placeholder="Buscar por nombre, puesto o departamento..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full md:w-auto"
-          />
-          <Select value={filterRole} onValueChange={setFilterRole}>
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="Filtrar por puesto" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los puestos</SelectItem>
-              <SelectItem value="Gerente">Gerente</SelectItem>
-              <SelectItem value="Desarrollador">Desarrollador</SelectItem>
-              <SelectItem value="Diseñador">Diseñador</SelectItem>
-              <SelectItem value="Analista">Analista</SelectItem>
-              <SelectItem value="Especialista">Especialista</SelectItem>
-              <SelectItem value="Coordinador">Coordinador</SelectItem>
-              <SelectItem value="Contador">Contador</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="id">ID</SelectItem>
-              <SelectItem value="nombre">Nombre</SelectItem>
-              <SelectItem value="puesto">Puesto</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            className="w-full md:w-auto"
-          >
-            {sortOrder === 'asc' ? 'Ascendente' : 'Descendente'}
-          </Button>
+      <div className="mb-6 flex flex-col md:flex-row items-center gap-4">
+        <Input
+          type="text"
+          placeholder="Buscar por nombre, puesto o departamento..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full md:w-auto"
+        />
+        <Select value={filterRole} onValueChange={setFilterRole}>
+          <SelectTrigger className="w-full md:w-[180px]">
+            <SelectValue placeholder="Filtrar por puesto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los puestos</SelectItem>
+            <SelectItem value="Gerente">Gerente</SelectItem>
+            <SelectItem value="Desarrollador">Desarrollador</SelectItem>
+            <SelectItem value="Diseñador">Diseñador</SelectItem>
+            <SelectItem value="Analista">Analista</SelectItem>
+            <SelectItem value="Especialista">Especialista</SelectItem>
+            <SelectItem value="Coordinador">Coordinador</SelectItem>
+            <SelectItem value="Contador">Contador</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-full md:w-[180px]">
+            <SelectValue placeholder="Ordenar por" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="id">ID</SelectItem>
+            <SelectItem value="nombre">Nombre</SelectItem>
+            <SelectItem value="puesto">Puesto</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          className="w-full md:w-auto"
+        >
+          {sortOrder === 'asc' ? 'Ascendente' : 'Descendente'}
+        </Button>
+      </div>
+
+      {isMobile ? (
+        // Vista de tarjetas para móviles
+        <div className="grid grid-cols-1 gap-4">
+          {filteredEmployees.map(empleado => (
+            <Card key={empleado.id} className="overflow-hidden transition-all hover:shadow-md">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage alt="Avatar" src={empleado.avatar} />
+                      <AvatarFallback>{empleado.nombre.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <Link to={`/perfil/${empleado.id}`} className="font-medium hover:underline">
+                        {empleado.nombre}
+                      </Link>
+                      <p className="text-sm text-gray-500">{empleado.puesto}</p>
+                    </div>
+                  </div>
+                  <Badge variant={empleado.estado === 'Activo' ? 'default' : 'outline'}>
+                    {empleado.estado}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-gray-500">Departamento</p>
+                    <p>{empleado.departamento}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Email</p>
+                    <p className="truncate">{empleado.email}</p>
+                  </div>
+                  <div className="col-span-2 flex justify-end mt-3">
+                    <Link to={`/perfil/${empleado.id}`}>
+                      <Button size="sm" variant="outline" className="flex items-center gap-1">
+                        <Eye className="h-4 w-4" />
+                        <span>Ver perfil</span>
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-
-        <div className="overflow-x-auto">
+      ) : (
+        // Tabla para pantallas más grandes
+        <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
           <Table className="min-w-full bg-white">
             <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
+              <TableRow className="bg-gray-50">
+                <TableHead className="w-[80px]">ID</TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Puesto</TableHead>
-                <TableHead>Departamento</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Teléfono</TableHead>
+                <TableHead className="hidden md:table-cell">Departamento</TableHead>
+                <TableHead className="hidden lg:table-cell">Email</TableHead>
+                <TableHead className="hidden xl:table-cell">Teléfono</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead>Acciones</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredEmployees.map(empleado => (
-                <TableRow key={empleado.id}>
-                  <TableCell>{empleado.id}</TableCell>
+                <TableRow key={empleado.id} className="hover:bg-gray-50 transition-colors">
+                  <TableCell className="font-medium">{empleado.id}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar className="hidden h-9 w-9 sm:flex">
+                      <Avatar className="hidden sm:flex h-8 w-8">
                         <AvatarImage alt="Avatar" src={empleado.avatar} />
                         <AvatarFallback>{empleado.nombre.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <Link to={`/perfil/${empleado.id}`}>{empleado.nombre}</Link>
+                      <Link to={`/perfil/${empleado.id}`} className="hover:underline">{empleado.nombre}</Link>
                     </div>
                   </TableCell>
                   <TableCell>{empleado.puesto}</TableCell>
-                  <TableCell>{empleado.departamento}</TableCell>
-                  <TableCell>{empleado.email}</TableCell>
-                  <TableCell>{empleado.telefono}</TableCell>
+                  <TableCell className="hidden md:table-cell">{empleado.departamento}</TableCell>
+                  <TableCell className="hidden lg:table-cell truncate max-w-[200px]">{empleado.email}</TableCell>
+                  <TableCell className="hidden xl:table-cell">{empleado.telefono}</TableCell>
                   <TableCell>
-                    <Badge variant={empleado.estado === 'Activo' ? 'default' : 'outline'}>
+                    <Badge variant={empleado.estado === 'Activo' ? 'default' : 'outline'} className="whitespace-nowrap">
                       {empleado.estado}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <Link to={`/perfil/${empleado.id}`}>
                       <Button size="icon" variant="outline">
                         <Eye className="h-4 w-4" />
@@ -245,7 +306,7 @@ const Employees = () => {
             </TableBody>
           </Table>
         </div>
-      </div>
+      )}
     </div>
   );
 };

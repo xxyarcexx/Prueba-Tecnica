@@ -1,55 +1,39 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, UsersIcon, BarChartIcon, SettingsIcon } from 'lucide-react'; // Asumiendo que los iconos vienen de lucide-react
+import { NavLink } from 'react-router-dom';
+import { HomeIcon, UsersIcon, FileTextIcon } from 'lucide-react';
+// Remove the framer-motion import line
 
 const Sidebar = () => {
-  const location = useLocation();
+  const menuItems = [
+    { path: '/', name: 'Inicio', icon: <HomeIcon size={20} /> },
+    { path: '/empleados', name: 'Empleados', icon: <UsersIcon size={20} /> },
+    { path: '/metadatos', name: 'Metadatos', icon: <FileTextIcon size={20} /> },
+  ];
 
   return (
-    <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col min-h-screen">
-      <div className="flex items-center justify-center h-16 border-b px-4">
-        <span className="text-2xl font-semibold text-gray-800">Admin Panel</span>
-      </div>
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-2 px-4">
-          <li>
-            <Link
-              to="/"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-900 transition-all hover:text-gray-900 ${location.pathname === '/' ? 'bg-gray-100' : ''}`}
-            >
-              <HomeIcon className="h-4 w-4" />
-              Volver a Inicio
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/empleados"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-900 transition-all hover:text-gray-900 ${location.pathname === '/empleados' ? 'bg-gray-100' : ''}`}
-            >
-              <UsersIcon className="h-4 w-4" />
-              Empleados
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/informes"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-900 transition-all hover:text-gray-900 ${location.pathname === '/informes' ? 'bg-gray-100' : ''}`}
-            >
-              <BarChartIcon className="h-4 w-4" />
-              Informes
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/metadatos"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-900 transition-all hover:text-gray-900 ${location.pathname === '/metadatos' ? 'bg-gray-100' : ''}`}
-            >
-              <SettingsIcon className="h-4 w-4" />
-              Metadatos
-            </Link>
-          </li>
+    <div className="h-full flex flex-col py-6 px-3">
+      <h2 className="text-2xl font-bold text-center mb-10 text-cream-100">Menú</h2>
+      <nav className="flex-1">
+        <ul className="space-y-4">
+          {menuItems.map((item) => (
+            <li key={item.path}>
+              <NavLink 
+                to={item.path} 
+                className={({ isActive }) => 
+                  `flex items-center p-3 rounded transition-all duration-200 ${isActive 
+                    ? 'bg-red-800 text-cream-100 shadow-md' 
+                    : 'hover:bg-red-800 hover:text-cream-100'}`
+                }
+              >
+                <span className="mr-3">{item.icon}</span>
+                <span>{item.name}</span>
+              </NavLink>
+            </li>
+          ))}
         </ul>
       </nav>
+      <div className="mt-auto pt-6 text-center text-sm text-cream-100 opacity-70">
+        <p>Sistema de Gestión v1.0</p>
+      </div>
     </div>
   );
 };

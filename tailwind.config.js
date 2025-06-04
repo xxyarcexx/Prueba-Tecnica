@@ -9,6 +9,19 @@ export default {
     theme: {
         extend: {
             colors: {
+                // Colores personalizados de rojo y crema
+                'red': {
+                    700: '#B91C1C', // Rojo principal
+                    800: '#991B1B', // Rojo oscuro para hover
+                    900: '#7F1D1D', // Rojo más oscuro
+                },
+                'cream': {
+                    50: '#FFFBEB',
+                    100: '#FEF3C7', // Crema principal
+                    200: '#FDE68A',
+                    300: '#FCD34D',
+                },
+                // Mantén el resto de los colores existentes
                 background: 'hsl(var(--background))',
                 foreground: 'hsl(var(--foreground))',
                 card: {
@@ -58,7 +71,9 @@ export default {
                     'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
                     border: 'hsl(var(--sidebar-border))',
                     ring: 'hsl(var(--sidebar-ring))'
-                }
+                },
+                'red-custom': '#FF0000', // Rojo
+                'cream-custom': '#FFFDD0' // Crema
             },
             borderRadius: {
                 lg: 'var(--radius)',
